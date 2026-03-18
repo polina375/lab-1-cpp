@@ -3,93 +3,85 @@
 #include "dataset.h"
 #include "evaluation.h"
 #include "console.h"
+
 #include <vector>
 
 void test_dataset() {
     auto data = Dataset::generate(10, 0.5f, 1.0f);
-    Console::info("Test: Dataset size");
-    Console::value("Expected 10, got", static_cast<int>(data.size()));
 
-    if (data.size() != 10) throw "Dataset size test failed";
+    Console::info("Test: Dataset size");
+    Console::value("Size", data.size());
+
+    if (data.size() != 10)
+        throw "Dataset test failed";
 }
 
 void test_linear() {
-    float transform[2][2] = { {1.0f, 0.1f},{0.0f,1.0f} };
+    float matrix[2][2] = {
+        {1.0f, 0.1f},
+        {0.0f, 1.0f}
+    };
+
     auto data = Dataset::generate(1, 0.0f, 0.0f);
-    float oldX = data[0].x;
-    float oldY = data[0].y;
 
-    auto newVec = Linear::transform(transform, oldX, oldY);
-    Console::info("Test: Linear transform applied");
-    Console::value("Original X", oldX);
-    Console::value("Transformed X", newVec.x);
+    float x = data[0].x;
+    float y = data[0].y;
 
-    if (newVec.x == oldX && newVec.y == oldY) throw "Linear transform test failed";
+    auto result = Linear::transform(matrix, x, y);
+
+    Console::info("Test: Linear transform");
+    Console::value("Old X", x);
+    Console::value("New X", result.x);
+
+    if (result.x == x && result.y == y)
+        throw "Linear test failed";
 }
 
 void test_evaluation() {
     auto data = Dataset::generate(5, 1.0f, 0.0f);
-    float error = Evaluation::meanAbsError(data, 1.0f, 0.0f);
-    Console::info("Test: Mean Absolute Error");
-    Console::value("Error", error);
 
-    if (error < 0.0f) throw "Evaluation error test failed";
+    float err = Evaluation::meanAbsError(data, 1.0f, 0.0f);
+
+    Console::info("Test: Evaluation");
+    Console::value("Error", err);
+
+    if (err < 0)
+        throw "Evaluation test failed";
 }
 
-void test_save_csv() {
+void test_csv() {
     auto data = Dataset::generate(5, 0.5f, 1.0f);
-    bool saved = Dataset::saveCSV(data, "../test_points.csv");
-    Console::info("Test: Save CSV");
-    Console::value("Saved", saved);
 
-    if (!saved) throw "CSV save test failed";
-} // <-- вот здесь закрываем функцию
+    bool ok = Dataset::saveCSV(data, "test_points.csv");
 
-int main_test() {
-    Console::info("Running Unit Tests...");
+    Console::info("Test: CSV");
+    Console::value("Saved", ok);
 
-    bool all_passed = true;
+    if (!ok)
+        throw "CSV test failed";
+}
 
-    // Проверяем Dataset
-    try {
-        test_dataset();
-    }
-    catch (...) {
-        Console::info("Dataset test failed!");
-        all_passed = false;
-    }
+int main() {
+    Console::info("Running tests...");
 
-    // Проверяем Linear
-    try {
-        test_linear();
-    }
-    catch (...) {
-        Console::info("Linear transform test failed!");
-        all_passed = false;
-    }
+    bool all_ok = true;
 
-    // Проверяем Evaluation
-    try {
-        test_evaluation();
-    }
-    catch (...) {
-        Console::info("Evaluation test failed!");
-        all_passed = false;
-    }
+    try { test_dataset(); }
+    catch (...) { Console::info("Dataset failed"); all_ok = false; }
 
-    // Проверяем CSV
-    try {
-        test_save_csv();
-    }
-    catch (...) {
-        Console::info("CSV save test failed!");
-        all_passed = false;
-    }
+    try { test_linear(); }
+    catch (...) { Console::info("Linear failed"); all_ok = false; }
 
-    if (all_passed)
-        Console::info("All tests passed successfully!");
+    try { test_evaluation(); }
+    catch (...) { Console::info("Evaluation failed"); all_ok = false; }
+
+    try { test_csv(); }
+    catch (...) { Console::info("CSV failed"); all_ok = false; }
+
+    if (all_ok)
+        Console::info("ALL TESTS PASSED");
     else
-        Console::info("Some tests failed.");
+        Console::info("SOME TESTS FAILED");
 
-    return all_passed ? 0 : 1;
+    return all_ok ? 0 : 1;
 }
